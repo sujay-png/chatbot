@@ -48,21 +48,22 @@ class _PaymentModalState extends State<PaymentModal> {
             ),
 
             const SizedBox(height: 6),
-            Text('Ticket ID: ${widget.ticketId}',
-                style: const TextStyle(color: Colors.grey)),
+            Text(
+              'Ticket ID: ${widget.ticketId}',
+              style: const TextStyle(color: Colors.grey),
+            ),
 
             const SizedBox(height: 24),
 
             Container(
               height: 200,
               width: 200,
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
+                color: Colors.white,
               ),
-              child: const Center(
-                child: Text('QR IMAGE HERE', style: TextStyle(color: Colors.grey)),
-              ),
+              child: Image.asset('assets/qr/upi_qr.jpg', fit: BoxFit.contain),
             ),
 
             const SizedBox(height: 28),

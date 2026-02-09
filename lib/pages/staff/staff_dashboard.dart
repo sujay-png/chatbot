@@ -4,7 +4,9 @@ import 'widgets/status_filter.dart';
 import 'widgets/ticket_table.dart';
 
 class StaffDashboard extends StatefulWidget {
-  const StaffDashboard({super.key});
+  final String serviceCenter;
+
+  const StaffDashboard({super.key, required this.serviceCenter});
 
   @override
   State<StaffDashboard> createState() => _StaffDashboardState();
@@ -12,6 +14,7 @@ class StaffDashboard extends StatefulWidget {
 
 class _StaffDashboardState extends State<StaffDashboard> {
   String statusFilter = 'all';
+  String searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +22,11 @@ class _StaffDashboardState extends State<StaffDashboard> {
       backgroundColor: const Color(0xFFF6F8FB),
       body: Row(
         children: [
-          const StaffSidebar(),
+          StaffSidebar(
+  onSearchChanged: (value) {
+    setState(() => searchQuery = value);
+  },
+),
 
           Expanded(
             child: Padding(
@@ -27,12 +34,17 @@ class _StaffDashboardState extends State<StaffDashboard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(
+                    'Service Center: ${widget.serviceCenter.toUpperCase()}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const Text(
                     'All Service Tickets',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 6),
                   const Text(
@@ -51,9 +63,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
 
                   const SizedBox(height: 24),
 
-Expanded(
-  child: TicketTable(filter: statusFilter),
-),
+                  Expanded(child: TicketTable(filter: statusFilter, search: '',)),
                 ],
               ),
             ),

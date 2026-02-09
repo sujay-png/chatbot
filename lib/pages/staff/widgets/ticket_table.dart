@@ -4,7 +4,12 @@ import '../ticket_detail_page.dart';
 
 class TicketTable extends StatefulWidget {
   final String filter;
-  const TicketTable({super.key, required this.filter});
+  final String search;
+  const TicketTable({
+    super.key,
+    required this.filter,
+    required this.search,
+  });
 
   @override
   State<TicketTable> createState() => _TicketTableState();
@@ -86,13 +91,16 @@ class _TicketTableState extends State<TicketTable> {
 
   Widget _row(BuildContext context, dynamic t) {
     return InkWell(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => TicketDetailPage(ticketCode: t['ticket_code']),
           ),
         );
+
+        // 🔥 REFRESH TABLE AFTER RETURN
+        setState(() {});
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
@@ -167,33 +175,15 @@ class _TicketTableState extends State<TicketTable> {
     if (s == 'open') {
       return _chip('OPEN', const Color(0xFFFFF3D6), const Color(0xFFB45309));
     }
-    if (s == 'in_progress') {
-      return _chip(
-        'IN PROGRESS',
-        const Color(0xFFE0ECFF),
-        const Color(0xFF1D4ED8),
-      );
-    }
-    return _chip(
-      'COMPLETED',
-      Colors.green.shade100,
-      Colors.green.shade700,
-    );
+
+    return _chip('COMPLETED', Colors.green.shade100, Colors.green.shade700);
   }
 
   Widget _paymentChip(String p) {
     if (p == 'paid') {
-      return _chip(
-        'PAID',
-        const Color(0xFFD1FAE5),
-        const Color(0xFF065F46),
-      );
+      return _chip('PAID', const Color(0xFFD1FAE5), const Color(0xFF065F46));
     }
-    return _chip(
-      'UNPAID',
-      const Color(0xFFFDE2E2),
-      const Color(0xFFB91C1C),
-    );
+    return _chip('UNPAID', const Color(0xFFFDE2E2), const Color(0xFFB91C1C));
   }
 
   Widget _chip(String text, Color bg, Color fg) {

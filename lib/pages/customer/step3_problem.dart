@@ -17,6 +17,8 @@ class Step3Problem extends StatefulWidget {
 }
 
 class _Step3ProblemState extends State<Step3Problem> {
+  String selectedCenter = '';
+
   // Controllers
   final _problemController = TextEditingController();
   final _nameController = TextEditingController();
@@ -65,18 +67,20 @@ class _Step3ProblemState extends State<Step3Problem> {
     final supabase = Supabase.instance.client;
     final bytes = await file.readAsBytes();
 
-    await supabase.storage
-        .from('ticket-images')
-        .uploadBinary(path, bytes);
+    await supabase.storage.from('ticket-images').uploadBinary(path, bytes);
 
-    return supabase.storage
-        .from('ticket-images')
-        .getPublicUrl(path);
+    return supabase.storage.from('ticket-images').getPublicUrl(path);
   }
 
   // ---------------- SUBMIT ----------------
 
   Future<void> _submitTicket() async {
+    if (selectedCenter.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a service center')),
+      );
+      return;
+    }
     if (_problemController.text.trim().isEmpty ||
         _nameController.text.trim().isEmpty ||
         _phoneController.text.trim().isEmpty) {
@@ -115,6 +119,7 @@ class _Step3ProblemState extends State<Step3Problem> {
       'problem_description': _problemController.text.trim(),
       'image_url': issueImageUrl,
       'bill_url': billImageUrl,
+      'service_center': selectedCenter,
       'customer_name': _nameController.text.trim(),
       'customer_phone': _phoneController.text.trim(),
     });
@@ -123,9 +128,7 @@ class _Step3ProblemState extends State<Step3Problem> {
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (_) => SuccessScreen(ticketId: ticketCode),
-      ),
+      MaterialPageRoute(builder: (_) => SuccessScreen(ticketId: ticketCode)),
     );
   }
 
@@ -186,8 +189,7 @@ class _Step3ProblemState extends State<Step3Problem> {
                   controller: _problemController,
                   maxLines: 4,
                   decoration: InputDecoration(
-                    hintText:
-                        "The screen is flickering and won't turn on...",
+                    hintText: "The screen is flickering and won't turn on...",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -278,6 +280,42 @@ class _Step3ProblemState extends State<Step3Problem> {
                     labelText: 'Phone Number',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                const Text(
+                  'Choose Service Center',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+
+                const SizedBox(height: 8),
+
+                DropdownButtonFormField<String>(
+                  value: selectedCenter.isEmpty ? null : selectedCenter,
+                  hint: const Text('Select nearest service center'),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'bengaluru',
+                      child: Text('Bengaluru'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'mangaluru',
+                      child: Text('Mangaluru'),
+                    ),
+                    DropdownMenuItem(value: 'udupi', child: Text('Udupi')),
+                  ],
+                  onChanged: (value) {
+                    setState(() => selectedCenter = value!);
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: const Color(0xFFF9FAFB),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
                     ),
                   ),
                 ),

@@ -39,8 +39,6 @@ class StatusFilter extends StatelessWidget {
         const SizedBox(width: 12),
         chip('Open', 'open'),
         const SizedBox(width: 12),
-        chip('In Progress', 'in_progress'),
-        const SizedBox(width: 12),
         chip('Completed', 'completed'),
       ],
     );
