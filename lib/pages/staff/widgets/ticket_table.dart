@@ -2,32 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../ticket_detail_page.dart';
 
-class TicketTable extends StatelessWidget {
-  final String statusFilter;
-  const TicketTable({super.key, required this.statusFilter});
+class TicketTable extends StatefulWidget {
+  final String filter;
+  const TicketTable({super.key, required this.filter});
 
+  @override
+  State<TicketTable> createState() => _TicketTableState();
+}
+
+class _TicketTableState extends State<TicketTable> {
   Future<List<dynamic>> fetchTickets() async {
     final supabase = Supabase.instance.client;
     var query = supabase.from('tickets').select();
 
-    if (statusFilter != 'all') {
-      query = query.eq('status', statusFilter);
+    if (widget.filter != 'all') {
+      query = query.eq('status', widget.filter);
     }
 
     return await query.order('created_at', ascending: false);
-  }
-
-  Color statusBg(String status) {
-    switch (status) {
-      case 'open':
-        return Colors.orange.withOpacity(0.15);
-      case 'in_progress':
-        return Colors.blue.withOpacity(0.15);
-      case 'completed':
-        return Colors.green.withOpacity(0.15);
-      default:
-        return Colors.grey.withOpacity(0.15);
-    }
   }
 
   @override
@@ -44,11 +36,13 @@ class TicketTable extends StatelessWidget {
         return Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE6EBF2)),
+            boxShadow: const [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
+                color: Color(0x11000000),
+                blurRadius: 12,
+                offset: Offset(0, 4),
               ),
             ],
           ),
@@ -57,24 +51,13 @@ class TicketTable extends StatelessWidget {
               _header(),
               const Divider(height: 1),
               Expanded(
-                child: ListView.builder(
+                child: ListView.separated(
                   itemCount: tickets.length,
+                  separatorBuilder: (_, __) =>
+                      const Divider(height: 1, color: Color(0xFFF1F3F6)),
                   itemBuilder: (context, index) {
-                    final ticket = tickets[index];
-
-                    return InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => TicketDetailPage(
-                              ticketCode: ticket['ticket_code'],
-                            ),
-                          ),
-                        );
-                      },
-                      child: _row(ticket),
-                    );
+                    final t = tickets[index];
+                    return _row(context, t);
                   },
                 ),
               ),
@@ -86,64 +69,166 @@ class TicketTable extends StatelessWidget {
   }
 
   Widget _header() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(24, 16, 24, 12),
       child: Row(
-        children: const [
-          Expanded(child: Text('TICKET ID')),
-          Expanded(flex: 2, child: Text('DEVICE / BRAND')),
-          Expanded(child: Text('STATUS')),
-          Expanded(child: Text('PAYMENT')),
-          Expanded(child: Text('DATE')),
+        children: [
+          Expanded(child: _HeaderText('TICKET ID')),
+          Expanded(flex: 2, child: _HeaderText('DEVICE / BRAND')),
+          Expanded(child: _HeaderText('STATUS')),
+          Expanded(child: _HeaderText('PAYMENT')),
+          Expanded(child: _HeaderText('DATE')),
+          SizedBox(width: 24),
         ],
       ),
     );
   }
 
-  Widget _row(dynamic ticket) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              ticket['ticket_code'],
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
+  Widget _row(BuildContext context, dynamic t) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TicketDetailPage(ticketCode: t['ticket_code']),
           ),
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(ticket['product_brand_model']),
-                Text(
-                  ticket['product_type'],
-                  style: const TextStyle(color: Colors.grey),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+        child: Row(
+          children: [
+            // Ticket ID
+            Expanded(
+              child: Text(
+                t['ticket_code'],
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1F2937),
                 ),
-              ],
+              ),
             ),
-          ),
-          Expanded(
-            child: Chip(
-              label: Text(ticket['status'].toUpperCase()),
-              backgroundColor: statusBg(ticket['status']),
+
+            // Device / Brand
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    t['product_brand_model'],
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    t['product_type'],
+                    style: const TextStyle(color: Color(0xFF9CA3AF)),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: Chip(
-              label: Text(ticket['payment_status'].toUpperCase()),
-              backgroundColor: ticket['payment_status'] == 'paid'
-                  ? Colors.green.withOpacity(0.15)
-                  : Colors.red.withOpacity(0.15),
+
+            // STATUS (FIXED)
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _statusChip(t['status']),
+              ),
             ),
-          ),
-          Expanded(
-            child: Text(
-              ticket['created_at'].toString().substring(0, 10),
+
+            // PAYMENT (FIXED)
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _paymentChip(t['payment_status']),
+              ),
             ),
-          ),
-        ],
+
+            // DATE
+            Expanded(
+              child: Text(
+                t['created_at'].toString().substring(0, 10),
+                style: const TextStyle(color: Color(0xFF64748B)),
+              ),
+            ),
+
+            const Icon(Icons.chevron_right, color: Color(0xFFCBD5E1)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _statusChip(String s) {
+    if (s == 'open') {
+      return _chip('OPEN', const Color(0xFFFFF3D6), const Color(0xFFB45309));
+    }
+    if (s == 'in_progress') {
+      return _chip(
+        'IN PROGRESS',
+        const Color(0xFFE0ECFF),
+        const Color(0xFF1D4ED8),
+      );
+    }
+    return _chip(
+      'COMPLETED',
+      Colors.green.shade100,
+      Colors.green.shade700,
+    );
+  }
+
+  Widget _paymentChip(String p) {
+    if (p == 'paid') {
+      return _chip(
+        'PAID',
+        const Color(0xFFD1FAE5),
+        const Color(0xFF065F46),
+      );
+    }
+    return _chip(
+      'UNPAID',
+      const Color(0xFFFDE2E2),
+      const Color(0xFFB91C1C),
+    );
+  }
+
+  Widget _chip(String text, Color bg, Color fg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+          color: fg,
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderText extends StatelessWidget {
+  final String text;
+  const _HeaderText(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 13,
+        letterSpacing: 1,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF8A94A6),
       ),
     );
   }

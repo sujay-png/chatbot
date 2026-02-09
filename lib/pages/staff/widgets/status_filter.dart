@@ -4,11 +4,7 @@ class StatusFilter extends StatelessWidget {
   final String selected;
   final Function(String) onChanged;
 
-  const StatusFilter({
-    super.key,
-    required this.selected,
-    required this.onChanged,
-  });
+  const StatusFilter({super.key, required this.selected, required this.onChanged});
 
   Widget chip(String label, String value) {
     final active = selected == value;
@@ -21,14 +17,14 @@ class StatusFilter extends StatelessWidget {
           color: active ? Colors.white : const Color(0xFFF1F3F6),
           borderRadius: BorderRadius.circular(14),
           boxShadow: active
-              ? [BoxShadow(color: Colors.black12, blurRadius: 6)]
+              ? const [BoxShadow(color: Color(0x11000000), blurRadius: 6)]
               : [],
         ),
         child: Text(
           label,
           style: TextStyle(
             fontWeight: FontWeight.w600,
-            color: active ? const Color(0xFF3B6EF6) : Colors.grey,
+            color: active ? const Color(0xFF2563EB) : const Color(0xFF64748B),
           ),
         ),
       ),

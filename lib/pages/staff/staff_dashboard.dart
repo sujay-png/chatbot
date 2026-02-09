@@ -51,9 +51,9 @@ class _StaffDashboardState extends State<StaffDashboard> {
 
                   const SizedBox(height: 24),
 
-                  Expanded(
-                    child: TicketTable(statusFilter: statusFilter),
-                  ),
+Expanded(
+  child: TicketTable(filter: statusFilter),
+),
                 ],
               ),
             ),
