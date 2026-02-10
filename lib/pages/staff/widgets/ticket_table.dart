@@ -23,26 +23,31 @@ class TicketTable extends StatefulWidget {
 class _TicketTableState extends State<TicketTable> {
   final supabase = Supabase.instance.client;
 
-  Future<List<dynamic>> fetchTickets() async {
-    var query = supabase.from('tickets').select();
+Future<List<dynamic>> fetchTickets() async {
+  print('🧪 isAdmin: ${widget.isAdmin}');
+  print('🧪 serviceCenter: ${widget.serviceCenter}');
+  print('🧪 filter: ${widget.filter}');
+  print('🧪 search: ${widget.search}');
 
-    // 🔐 Staff isolation
-    if (!widget.isAdmin && widget.serviceCenter != null) {
-      query = query.eq('service_center', widget.serviceCenter as Object);
-    }
+  var query = supabase.from('tickets').select();
 
-    // 🔎 Status filter
-    if (widget.filter != 'all') {
-      query = query.eq('status', widget.filter);
-    }
-
-    // 🔍 Search by ticket code
-    if (widget.search.isNotEmpty) {
-      query = query.ilike('ticket_code', '%${widget.search}%');
-    }
-
-    return await query.order('created_at', ascending: false);
+  if (!widget.isAdmin && widget.serviceCenter != null) {
+    query = query.eq('service_center', widget.serviceCenter!);
   }
+
+  if (widget.filter != 'all') {
+    query = query.eq('status', widget.filter);
+  }
+
+  if (widget.search.isNotEmpty) {
+    query = query.ilike('ticket_code', '%${widget.search}%');
+  }
+
+  final result = await query.order('created_at', ascending: false);
+
+  print('🧪 tickets fetched: ${result.length}');
+  return result;
+}
 
   @override
   Widget build(BuildContext context) {
@@ -123,9 +128,7 @@ class _TicketTableState extends State<TicketTable> {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => TicketDetailPage(
-              ticketCode: t['ticket_code'],
-            ),
+            builder: (_) => TicketDetailPage(ticketCode: t['ticket_code']),
           ),
         );
 
@@ -198,32 +201,16 @@ class _TicketTableState extends State<TicketTable> {
 
   Widget _statusChip(String s) {
     if (s == 'completed') {
-      return _chip(
-        'COMPLETED',
-        Colors.green.shade100,
-        Colors.green.shade700,
-      );
+      return _chip('COMPLETED', Colors.green.shade100, Colors.green.shade700);
     }
-    return _chip(
-      'OPEN',
-      const Color(0xFFFFF3D6),
-      const Color(0xFFB45309),
-    );
+    return _chip('OPEN', const Color(0xFFFFF3D6), const Color(0xFFB45309));
   }
 
   Widget _paymentChip(String p) {
     if (p == 'paid') {
-      return _chip(
-        'PAID',
-        const Color(0xFFD1FAE5),
-        const Color(0xFF065F46),
-      );
+      return _chip('PAID', const Color(0xFFD1FAE5), const Color(0xFF065F46));
     }
-    return _chip(
-      'UNPAID',
-      const Color(0xFFFDE2E2),
-      const Color(0xFFB91C1C),
-    );
+    return _chip('UNPAID', const Color(0xFFFDE2E2), const Color(0xFFB91C1C));
   }
 
   Widget _chip(String text, Color bg, Color fg) {

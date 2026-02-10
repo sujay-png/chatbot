@@ -95,7 +95,7 @@ if (session == null) {
               const SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
-                value: center,
+                initialValue: center,
                 decoration: _decoration('Service Center'),
                 items: const [
                   DropdownMenuItem(value: 'bengaluru', child: Text('Bengaluru')),
