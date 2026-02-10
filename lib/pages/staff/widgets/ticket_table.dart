@@ -5,10 +5,15 @@ import '../ticket_detail_page.dart';
 class TicketTable extends StatefulWidget {
   final String filter;
   final String search;
+  final bool isAdmin;
+  final String? serviceCenter;
+
   const TicketTable({
     super.key,
     required this.filter,
     required this.search,
+    required this.isAdmin,
+    this.serviceCenter,
   });
 
   @override
@@ -16,12 +21,24 @@ class TicketTable extends StatefulWidget {
 }
 
 class _TicketTableState extends State<TicketTable> {
+  final supabase = Supabase.instance.client;
+
   Future<List<dynamic>> fetchTickets() async {
-    final supabase = Supabase.instance.client;
     var query = supabase.from('tickets').select();
 
+    // 🔐 Staff isolation
+    if (!widget.isAdmin && widget.serviceCenter != null) {
+      query = query.eq('service_center', widget.serviceCenter as Object);
+    }
+
+    // 🔎 Status filter
     if (widget.filter != 'all') {
       query = query.eq('status', widget.filter);
+    }
+
+    // 🔍 Search by ticket code
+    if (widget.search.isNotEmpty) {
+      query = query.ilike('ticket_code', '%${widget.search}%');
     }
 
     return await query.order('created_at', ascending: false);
@@ -29,14 +46,23 @@ class _TicketTableState extends State<TicketTable> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
+    return FutureBuilder<List<dynamic>>(
       future: fetchTickets(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final tickets = snapshot.data as List;
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text(
+              'No tickets found',
+              style: TextStyle(color: Colors.grey),
+            ),
+          );
+        }
+
+        final tickets = snapshot.data!;
 
         return Container(
           decoration: BoxDecoration(
@@ -73,6 +99,8 @@ class _TicketTableState extends State<TicketTable> {
     );
   }
 
+  // ---------------- UI ----------------
+
   Widget _header() {
     return const Padding(
       padding: EdgeInsets.fromLTRB(24, 16, 24, 12),
@@ -95,18 +123,19 @@ class _TicketTableState extends State<TicketTable> {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => TicketDetailPage(ticketCode: t['ticket_code']),
+            builder: (_) => TicketDetailPage(
+              ticketCode: t['ticket_code'],
+            ),
           ),
         );
 
-        // 🔥 REFRESH TABLE AFTER RETURN
+        // 🔄 Refresh after returning
         setState(() {});
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
         child: Row(
           children: [
-            // Ticket ID
             Expanded(
               child: Text(
                 t['ticket_code'],
@@ -118,7 +147,6 @@ class _TicketTableState extends State<TicketTable> {
               ),
             ),
 
-            // Device / Brand
             Expanded(
               flex: 2,
               child: Column(
@@ -140,7 +168,6 @@ class _TicketTableState extends State<TicketTable> {
               ),
             ),
 
-            // STATUS (FIXED)
             Expanded(
               child: Align(
                 alignment: Alignment.centerLeft,
@@ -148,7 +175,6 @@ class _TicketTableState extends State<TicketTable> {
               ),
             ),
 
-            // PAYMENT (FIXED)
             Expanded(
               child: Align(
                 alignment: Alignment.centerLeft,
@@ -156,7 +182,6 @@ class _TicketTableState extends State<TicketTable> {
               ),
             ),
 
-            // DATE
             Expanded(
               child: Text(
                 t['created_at'].toString().substring(0, 10),
@@ -172,18 +197,33 @@ class _TicketTableState extends State<TicketTable> {
   }
 
   Widget _statusChip(String s) {
-    if (s == 'open') {
-      return _chip('OPEN', const Color(0xFFFFF3D6), const Color(0xFFB45309));
+    if (s == 'completed') {
+      return _chip(
+        'COMPLETED',
+        Colors.green.shade100,
+        Colors.green.shade700,
+      );
     }
-
-    return _chip('COMPLETED', Colors.green.shade100, Colors.green.shade700);
+    return _chip(
+      'OPEN',
+      const Color(0xFFFFF3D6),
+      const Color(0xFFB45309),
+    );
   }
 
   Widget _paymentChip(String p) {
     if (p == 'paid') {
-      return _chip('PAID', const Color(0xFFD1FAE5), const Color(0xFF065F46));
+      return _chip(
+        'PAID',
+        const Color(0xFFD1FAE5),
+        const Color(0xFF065F46),
+      );
     }
-    return _chip('UNPAID', const Color(0xFFFDE2E2), const Color(0xFFB91C1C));
+    return _chip(
+      'UNPAID',
+      const Color(0xFFFDE2E2),
+      const Color(0xFFB91C1C),
+    );
   }
 
   Widget _chip(String text, Color bg, Color fg) {

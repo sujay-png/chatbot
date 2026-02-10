@@ -1,12 +1,16 @@
+import 'package:chatbot/admin/create_staff_page.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+
 class StaffSidebar extends StatelessWidget {
-  final ValueChanged<String> onSearchChanged;
+  final bool isAdmin;
+  final ValueChanged<String>? onSearchChanged;
 
   const StaffSidebar({
     super.key,
-    required this.onSearchChanged,
+    this.isAdmin = false,
+    this.onSearchChanged,
   });
 
   @override
@@ -16,20 +20,14 @@ class StaffSidebar extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          right: BorderSide(color: Color(0xFFE6EBF2)),
-        ),
+        border: Border(right: BorderSide(color: Color(0xFFE6EBF2))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔹 TITLE
           const Text(
             'Staff Dashboard',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 20),
@@ -38,7 +36,7 @@ class StaffSidebar extends StatelessWidget {
           TextField(
             onChanged: onSearchChanged,
             decoration: InputDecoration(
-              hintText: 'Search tickets...',
+              hintText: 'Search Ticket ID...',
               prefixIcon: const Icon(Icons.search),
               filled: true,
               fillColor: const Color(0xFFF1F3F7),
@@ -46,14 +44,11 @@ class StaffSidebar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none,
               ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
           ),
 
           const SizedBox(height: 32),
 
-          // 🔹 NAV LABEL
           const Text(
             'NAVIGATION',
             style: TextStyle(
@@ -66,38 +61,34 @@ class StaffSidebar extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // 🔹 NAV CARD
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF4FF),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              children: const [
-                Icon(
-                  Icons.confirmation_number,
-                  color: Color(0xFF2563EB),
-                ),
-                SizedBox(width: 12),
-                Text(
-                  'All Tickets',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2563EB),
-                  ),
-                ),
-              ],
-            ),
+          _navItem(
+            icon: Icons.confirmation_number,
+            label: 'All Tickets',
+            active: true,
           ),
 
-          const Spacer(),
+          // 🛡️ ADMIN ONLY
+          if (isAdmin) ...[
+            const SizedBox(height: 6),
+            _navItem(
+              icon: Icons.person_add_alt,
+              label: 'Create Staff',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CreateStaffPage(),
+                  ),
+                );
+              },
+            ),
+          ],
 
+          const Spacer(),
           const Divider(),
 
-          // 🔴 LOGOUT
+          // 🚪 LOGOUT
           ListTile(
-            contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.logout, color: Colors.redAccent),
             title: const Text(
               'Logout',
@@ -108,10 +99,46 @@ class StaffSidebar extends StatelessWidget {
             ),
             onTap: () async {
               await Supabase.instance.client.auth.signOut();
-              // AuthGate will redirect automatically
+              // AuthGate handles redirect
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _navItem({
+    required IconData icon,
+    required String label,
+    bool active = false,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFFEFF4FF) : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: active ? const Color(0xFF2563EB) : Colors.grey,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color:
+                    active ? const Color(0xFF2563EB) : const Color(0xFF334155),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

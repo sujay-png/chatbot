@@ -36,91 +36,144 @@ class _Step2BrandState extends State<Step2Brand> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FC),
+      backgroundColor: const Color(0xFFF8F9FB),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1E293B), size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Center(
-        child: FadeSlide(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 420),
-            padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(32),
-              boxShadow: [
-                BoxShadow(
-                  blurRadius: 30,
-                  color: Colors.black.withOpacity(.08),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 🔹 Step Indicator
-                const Text(
-                  'STEP 2 OF 3',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    letterSpacing: 1.2,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w600,
+        child: SingleChildScrollView( // Prevents overflow when keyboard appears
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: FadeSlide(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 450),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(40),
+                boxShadow: [
+                  BoxShadow(
+                    blurRadius: 40,
+                    offset: const Offset(0, 10),
+                    color: Colors.black.withOpacity(.05),
                   ),
-                ),
-                const SizedBox(height: 12),
-
-                const Text(
-                  'Tell us more',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // 🔹 Brand & Model Input
-                TextField(
-                  controller: _controller,
-                  decoration: InputDecoration(
-                    labelText: 'Brand & Model',
-                    hintText: 'e.g. Dell XPS 15',
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF3B6EF6),
-                        width: 2,
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 🔹 Step Indicator (Consistent Badge Style)
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3267F6).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: const Text(
+                        'STEP 2 OF 3',
+                        style: TextStyle(
+                          letterSpacing: 1.5,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF3267F6),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 24),
 
-                const SizedBox(height: 36),
-
-                // 🔹 Continue Button (NOW WORKS)
-                ElevatedButton(
-                  onPressed: _isValid
-                      ? () {
-                          widget.model.brandModel = _controller.text.trim();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  Step3Problem(model: widget.model),
-                            ),
-                          );
-                        }
-                      : null,
-                  child: const Text(
-                    'Continue',
+                  const Text(
+                    'Tell us more',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1E293B),
+                      letterSpacing: -0.5,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Which device are you having trouble with?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // 🔹 Brand & Model Input (Refined Look)
+                  TextField(
+                    controller: _controller,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                    decoration: InputDecoration(
+                      labelText: 'Brand & Model',
+                      hintText: 'e.g. Dell XPS 15',
+                      prefixIcon: const Icon(Icons.devices_other_rounded, color: Color(0xFF3267F6)),
+                      labelStyle: const TextStyle(color: Color(0xFF64748B)),
+                      floatingLabelStyle: const TextStyle(color: Color(0xFF3267F6), fontWeight: FontWeight.bold),
+                      filled: true,
+                      fillColor: const Color(0xFFF8F9FB),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: Colors.grey.withOpacity(0.1)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF3267F6),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 48),
+
+                  // 🔹 Continue Button (Consistent Full-Width Style)
+                  SizedBox(
+                    height: 60,
+                    child: ElevatedButton(
+                      onPressed: _isValid
+                          ? () {
+                              widget.model.brandModel = _controller.text.trim();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => Step3Problem(model: widget.model),
+                                ),
+                              );
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3267F6),
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.grey.shade200,
+                        disabledForegroundColor: Colors.grey.shade500,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        'Continue',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
