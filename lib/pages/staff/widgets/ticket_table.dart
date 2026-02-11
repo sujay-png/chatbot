@@ -24,11 +24,6 @@ class _TicketTableState extends State<TicketTable> {
   final supabase = Supabase.instance.client;
 
 Future<List<dynamic>> fetchTickets() async {
-  print('🧪 isAdmin: ${widget.isAdmin}');
-  print('🧪 serviceCenter: ${widget.serviceCenter}');
-  print('🧪 filter: ${widget.filter}');
-  print('🧪 search: ${widget.search}');
-
   var query = supabase.from('tickets').select();
 
   if (!widget.isAdmin && widget.serviceCenter != null) {
@@ -45,7 +40,6 @@ Future<List<dynamic>> fetchTickets() async {
 
   final result = await query.order('created_at', ascending: false);
 
-  print('🧪 tickets fetched: ${result.length}');
   return result;
 }
 

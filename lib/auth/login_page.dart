@@ -155,7 +155,7 @@ class _LoginPageState extends State<LoginPage> {
 
                 const Center(
                   child: Text(
-                    'CRM System — WRNXT',
+                    'Designed and Developed by — WRNXT',
                     style: TextStyle(
                       color: Colors.grey,
                       fontSize: 12,
