@@ -2,15 +2,16 @@ import 'package:chatbot/admin/create_staff_page.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-
 class StaffSidebar extends StatelessWidget {
   final bool isAdmin;
   final ValueChanged<String>? onSearchChanged;
+  final String serviceCenter;
 
   const StaffSidebar({
     super.key,
     this.isAdmin = false,
     this.onSearchChanged,
+    required this.serviceCenter,
   });
 
   @override
@@ -60,6 +61,13 @@ class StaffSidebar extends StatelessWidget {
           ),
 
           const SizedBox(height: 12),
+          ListTile(
+            leading: const Icon(Icons.groups),
+            title: const Text("Technician Fleet"),
+            onTap: () {
+              Navigator.pushNamed(context, '/technicians');
+            },
+          ),
 
           _navItem(
             icon: Icons.confirmation_number,
@@ -76,9 +84,7 @@ class StaffSidebar extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const CreateStaffPage(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const CreateStaffPage()),
                 );
               },
             ),
@@ -124,17 +130,15 @@ class StaffSidebar extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: active ? const Color(0xFF2563EB) : Colors.grey,
-            ),
+            Icon(icon, color: active ? const Color(0xFF2563EB) : Colors.grey),
             const SizedBox(width: 12),
             Text(
               label,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color:
-                    active ? const Color(0xFF2563EB) : const Color(0xFF334155),
+                color: active
+                    ? const Color(0xFF2563EB)
+                    : const Color(0xFF334155),
               ),
             ),
           ],

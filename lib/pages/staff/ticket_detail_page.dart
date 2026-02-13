@@ -22,7 +22,10 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
     fetchTicket();
   }
 
+  // 🔹 FETCH TICKET
   Future<void> fetchTicket() async {
+    setState(() => loading = true);
+
     final data = await supabase
         .from('tickets')
         .select()
@@ -35,40 +38,98 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
     });
   }
 
+  // 🔹 COMPLETE SERVICE
   Future<void> completeService() async {
     await supabase
         .from('tickets')
         .update({'status': 'completed'})
-        .eq('ticket_code', widget.ticketCode);
+        .eq('id', ticket!['id']);
 
     await fetchTicket();
   }
 
+  // 🔹 ASSIGN TECH MODAL
+  Future<void> showAssignModal(BuildContext context) async {
+    final techs = await supabase
+        .from('technicians')
+        .select()
+        .eq('service_center', ticket!['service_center']);
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("Assign Technician"),
+          content: SizedBox(
+            width: 400,
+            child: techs.isEmpty
+                ? const Text("No technicians found for this center")
+                : ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: techs.length,
+                    itemBuilder: (context, index) {
+                      final t = techs[index];
+
+                      return ListTile(
+                        title: Text(t['full_name']),
+                        onTap: () async {
+                          await supabase.from('tickets').update({
+                            'technician_id': t['id'],
+                            'status': 'in_progress', // 🔥 lifecycle update
+                          }).eq('id', ticket!['id']);
+
+                          Navigator.pop(context);
+                          await fetchTicket(); // 🔥 IMPORTANT
+                        },
+                      );
+                    },
+                  ),
+          ),
+        );
+      },
+    );
+  }
+
+  // 🔹 CHIP UI
   Widget chip(String text, Color bg, Color fg) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Text(
         text.toUpperCase(),
-        style: TextStyle(color: fg, fontWeight: FontWeight.bold, fontSize: 12),
+        style: TextStyle(
+          color: fg,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
       ),
     );
   }
 
-  Widget statusChip(String s) =>
-      s == 'completed'
-          ? chip('COMPLETED', const Color(0xFFDCFCE7), const Color(0xFF166534))
-          : chip('OPEN', const Color(0xFFFFF3D6), const Color(0xFFB45309));
+  Widget statusChip(String s) {
+    switch (s) {
+      case 'completed':
+        return chip('COMPLETED', const Color(0xFFDCFCE7), const Color(0xFF166534));
+      case 'in_progress':
+        return chip('IN PROGRESS', const Color(0xFFE0ECFF), const Color(0xFF1D4ED8));
+      default:
+        return chip('OPEN', const Color(0xFFFFF3D6), const Color(0xFFB45309));
+    }
+  }
 
-  Widget paymentChip(String s) =>
-      s == 'paid'
-          ? chip('PAID', const Color(0xFFDCFCE7), const Color(0xFF166534))
-          : chip('UNPAID', const Color(0xFFFCE4E4), const Color(0xFFB91C1C));
+  Widget paymentChip(String s) => s == 'paid'
+      ? chip('PAID', const Color(0xFFDCFCE7), const Color(0xFF166534))
+      : chip('UNPAID', const Color(0xFFFCE4E4), const Color(0xFFB91C1C));
 
   @override
   Widget build(BuildContext context) {
-    if (loading) {
+    if (loading || ticket == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -78,12 +139,15 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
       backgroundColor: const Color(0xFFF6F8FB),
       body: Row(
         children: [
-          StaffSidebar(onSearchChanged: (String value) {  },),
+          StaffSidebar(
+            onSearchChanged: (value) {},
+            serviceCenter: ticket!['service_center'],
+          ),
 
           Expanded(
             child: Column(
               children: [
-                // 🔹 HEADER (FIXED)
+                // 🔹 HEADER
                 Padding(
                   padding: const EdgeInsets.all(32),
                   child: Row(
@@ -92,26 +156,68 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                         icon: const Icon(Icons.arrow_back_ios_new),
                         onPressed: () => Navigator.pop(context),
                       ),
+
+                      const SizedBox(width: 8),
+
                       Text(
                         ticket!['ticket_code'],
-                        style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
+
                       const SizedBox(width: 12),
                       statusChip(ticket!['status']),
                       const SizedBox(width: 8),
                       paymentChip(ticket!['payment_status']),
+
                       const Spacer(),
+
+                      ElevatedButton.icon(
+                        onPressed: () => showAssignModal(context),
+                        icon: const Icon(Icons.person_add, color: Colors.white),
+                        label: const Text(
+                          "Assign Technician",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
 
                       if (ticket!['status'] != 'completed')
                         ElevatedButton.icon(
                           onPressed: completeService,
                           icon: const Icon(Icons.check_circle, color: Colors.white),
-                          label: const Text('Complete Service',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          label: const Text(
+                            'Complete Service',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF2E9D62),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
                         ),
 
@@ -122,31 +228,42 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                           onPressed: () async {
                             final paid = await showDialog<bool>(
                               context: context,
-                              builder: (_) => PaymentModal(ticketId: ticket!['ticket_code']),
+                              builder: (_) => PaymentModal(
+                                ticketId: ticket!['ticket_code'],
+                              ),
                             );
                             if (paid == true) await fetchTicket();
                           },
                           icon: const Icon(Icons.credit_card, color: Colors.white),
-                          label: const Text('Process Payment',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          label: const Text(
+                            'Process Payment',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF3B6EF6),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
                         ),
                     ],
                   ),
                 ),
 
-                // 🔹 MAIN CONTENT (THIS WAS MISSING)
+                // 🔹 MAIN CONTENT
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // LEFT
                         Expanded(
                           flex: 3,
                           child: Column(
@@ -158,17 +275,18 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                                 infoCard('Brand & Model', ticket!['product_brand_model']),
                               ),
                               sectionTitle('ISSUE DESCRIPTION'),
-                              whiteCard(Text('"${ticket!['problem_description']}"',
-                                  style: const TextStyle(fontStyle: FontStyle.italic))),
+                              whiteCard(
+                                Text(
+                                  '"${ticket!['problem_description']}"',
+                                  style: const TextStyle(fontStyle: FontStyle.italic),
+                                ),
+                              ),
                               sectionTitle('ATTACHMENTS'),
                               attachmentBox(),
                             ],
                           ),
                         ),
-
                         const SizedBox(width: 32),
-
-                        // RIGHT
                         Expanded(
                           flex: 2,
                           child: customerCard(
@@ -188,30 +306,45 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
     );
   }
 
-  // ---------- UI HELPERS ----------
+  // 🔹 UI HELPERS
 
   Widget sectionTitle(String t) => Padding(
         padding: const EdgeInsets.only(bottom: 12, top: 32),
-        child: Text(t,
-            style: const TextStyle(
-                color: Colors.grey, letterSpacing: 1, fontWeight: FontWeight.bold)),
+        child: Text(
+          t,
+          style: const TextStyle(
+            color: Colors.grey,
+            letterSpacing: 1,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       );
 
   Widget rowCards(Widget a, Widget b) => Row(
-        children: [Expanded(child: a), const SizedBox(width: 16), Expanded(child: b)],
+        children: [
+          Expanded(child: a),
+          const SizedBox(width: 16),
+          Expanded(child: b),
+        ],
       );
 
-  Widget infoCard(String label, String value) =>
-      whiteCard(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: const TextStyle(color: Colors.grey)),
-        const SizedBox(height: 6),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-      ]));
+  Widget infoCard(String label, String value) => whiteCard(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(color: Colors.grey)),
+            const SizedBox(height: 6),
+            Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+      );
 
   Widget whiteCard(Widget child) => Container(
         padding: const EdgeInsets.all(20),
-        decoration:
-            BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+        ),
         child: child,
       );
 
@@ -237,13 +370,23 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
           ),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Customer Contact',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          Text(name ?? 'Unknown',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          Text(phone ?? '', style: const TextStyle(color: Colors.white70)),
-        ]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Customer Contact',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              name ?? 'Unknown',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(phone ?? '', style: const TextStyle(color: Colors.white70)),
+          ],
+        ),
       );
 }

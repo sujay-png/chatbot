@@ -25,6 +25,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
         children: [
           // 🔹 SIDEBAR
           StaffSidebar(
+            serviceCenter: widget.serviceCenter ?? '',
             isAdmin: widget.isAdmin,
             onSearchChanged: (value) {
               setState(() => searchQuery = value);
@@ -48,7 +49,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-
+      
                   const Text(
                     'All Service Tickets',
                     style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
